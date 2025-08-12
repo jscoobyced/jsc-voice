@@ -36,7 +36,7 @@ You don't need `HUGGINGFACE_TOKEN` for dia. Only for Orpheus.
 python tts-app.py
 ```
 
-5.2. Voice to text
+5.2. Voice to text (not implemented yet)
 ```
 python vtt-app.py
 ```

@@ -6,6 +6,7 @@ dist/
 wheels/
 *.egg-info
 pyvenv.cfg
+models
 
 # Virtual environments
 .venv
@@ -27,4 +28,4 @@ config.json
 .env
 *.wav
 *.mp3
-!billy-willy.mp3
+!billy-willy.wav

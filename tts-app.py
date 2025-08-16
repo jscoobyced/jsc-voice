@@ -1,17 +1,17 @@
 import tts.TextToSpeech as tts
-import numpy as np
+import os
+from dotenv import load_dotenv
 
-text_to_generate_1 = (
-    "Once upon a time, in a land far away from mankind, lived a gorgeous little fox."
-)
-text_to_generate_2 = "Her name was foxy, and she loved dancing in the flower fields."
-list_of_text = [text_to_generate_1, text_to_generate_2]
+import soundfile as sf
 
-tts_instance = tts.TextToSpeech()
-outputs = list()
-for text in list_of_text:
-    output = tts_instance.generate(text)
-    outputs.append(output)
+DEFAULT_SAMPLE_RATE = 16000
 
-full_output = np.concatenate(outputs)
-tts_instance.save_audio("output.mp3", full_output)
+load_dotenv()
+
+text = "Once upon a time, in a land far away from mankind, lived a gorgeous little fox. Her name was foxy, and she loved dancing in the flower fields. One day she went near the river to drink a bit of water."
+model_dir = "models/" + os.environ["SPARK_AUDIO_MODEL"]
+
+tts_instance = tts.TextToSpeech(model_dir, ".", "0")
+
+output = tts_instance.generate(text)
+sf.write("output.mp3", output, samplerate=DEFAULT_SAMPLE_RATE, format="mp3")

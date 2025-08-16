@@ -9,17 +9,19 @@ authors = [
     {name = "JScdroidDev", email = "19742131+jscoobyced@users.noreply.github.com"}
 ]
 dependencies = [
-    "descript-audio-codec>=1.0.0",
+    "einops>=0.8.1",
+    "einx>=0.3.0",
     "huggingface-hub>=0.30.2",
     "numpy>=2.2.4",
-    "pydantic>=2.11.3",
+    "omegaconf>=2.3.0",
     "python-dotenv>=1.1.1",
     "safetensors>=0.5.3",
     "soundfile>=0.13.1",
-    "toml>=0.10.2",
+    "soxr>=0.5.0",
     "torch==2.6.0",
-    "transformers>=4.55.0",
-    "triton==3.2.0"
+    "torchaudio>=2.5.1",
+    "tqdm>=4.67.1",
+    "transformers>=4.55.0"
 ]
 
 [build-system]

@@ -1,4 +1,4 @@
-import logging
+import util.logger as log
 import tts.model.SparkArgument as sa
 import tts.model.SparkConfiguration as sc
 import os
@@ -8,6 +8,8 @@ import platform
 import warnings
 
 from sparktts.cli.SparkTTS import SparkTTS
+
+logging = log.Logger()
 
 
 class Spark:

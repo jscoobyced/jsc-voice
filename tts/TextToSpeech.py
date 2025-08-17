@@ -1,14 +1,10 @@
-from dotenv import load_dotenv
 import os
-import torch
+import numpy as np
 
 import tts.model.SparkArgument as sa
 import tts.model.SparkConfiguration as sc
 
 import tts.Spark as s
-
-
-load_dotenv()
 
 
 class TextToSpeech:
@@ -22,7 +18,7 @@ class TextToSpeech:
         )
         self._model = s.Spark(configuration)
 
-    def generate(self, content: str) -> torch.Tensor:
-        argument = sa.SparkArgument(content, speed="moderate", pitch="moderate")
+    def generate(self, content: str) -> np.ndarray:
+        argument = sa.SparkArgument(content, speed="moderate", pitch="high")
 
         return self._model.generate(argument)

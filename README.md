@@ -1,4 +1,4 @@
-## Jsc Dia MCP
+## Jsc Voice
 
 JSC Voice - A simple API to transcript voice or generate voice from text.
 Internally using code from:
@@ -18,9 +18,9 @@ THis has been tested so far on this environment:
 git clone https://github.com/jscoobyced/jsc-voice.git
 ```
 
-3. Navigate to the project server directory:
+3. Navigate to the project tts directory:
 ```
-cd jsc-voice/server
+cd jsc-voice/tts
 ```
 
 4. Install dependencies:

@@ -1,1 +1,14 @@
+# Python-generated files
+__pycache__/
+.venv
+
+# Project files
+.env
+*.wav
+*.mp3
+!billy-willy.wav
+*.log
+tts/models
+
+# Temp stuff
 index.ts

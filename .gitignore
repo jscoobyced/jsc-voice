@@ -8,7 +8,4 @@ __pycache__/
 *.mp3
 !billy-willy.wav
 *.log
-tts/models
-
-# Temp stuff
-index.ts
+application/models

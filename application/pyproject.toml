@@ -3,38 +3,47 @@ name = "jsc-voice"
 version = "0.1.0"
 description = "JSC Voice - A simple API to transcript voice or generate voice from text."
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.12"
 license = {file = "LICENSE"}
 authors = [
     {name = "JScdroidDev", email = "19742131+jscoobyced@users.noreply.github.com"}
 ]
+
 dependencies = [
-    "einops>=0.8.1",
-    "einx>=0.3.0",
-    "flask>=3.1.1",
-    "huggingface-hub>=0.30.2",
-    "numpy>=2.2.4",
-    "omegaconf>=2.3.0",
-    "python-dotenv>=1.1.1",
-    "safetensors>=0.5.3",
-    "soundfile>=0.13.1",
-    "soxr>=0.5.0",
-    "torch==2.6.0",
-    "torchaudio>=2.5.1",
-    "tqdm>=4.67.1",
-    "transformers>=4.55.0"
+  "asyncio>=4.0.0",
+  "einops>=0.8.1",
+  "einx>=0.3.0",
+  "huggingface-hub>=0.30.2",
+  "more-itertools",
+  "numba",
+  "numpy>=2.2.4",
+  "omegaconf>=2.3.0",
+  "openai-whisper",
+  "python-dotenv>=1.1.1",
+  "safetensors>=0.5.3",
+  "sounddevice>=0.5.2",
+  "soundfile>=0.13.1",
+  "soxr>=0.5.0",
+  "tiktoken",
+  "torch==2.6.0",
+  "torchaudio>=2.5.1",
+  "tqdm>=4.67.1",
+  "transformers>=4.55.0",
+  "triton>=2; (platform_machine=='x86_64' and sys_platform=='linux') or sys_platform=='linux2'",
+  "websockets>=15.0.1"
 ]
+optional-dependencies.dev = [ "black", "flake8", "isort", "pytest", "scipy" ]
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project.urls]
-"Homepage" = "https://github.com/jscoobyced/jsc-tts"
-"Bug Tracker" = "https://github.com/jscoobyced/jsc-tts/issues"
+"Homepage" = "https://github.com/jscoobyced/jsc-voice"
+"Bug Tracker" = "https://github.com/jscoobyced/jsc-voice/issues"
 
 [tool.hatch.build.targets.wheel]
-packages = ["jsc-tts"]
+packages = ["jsc-voice"]
 
 [tool.ruff]
 # Never enforce `E501` (line length violations).

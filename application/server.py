@@ -7,13 +7,18 @@ import io
 from dotenv import load_dotenv
 from speech_to_text import SpeechToText
 import tts.TextToSpeech as tts
+import ollama.fetch as Ollama
 import soundfile as sf
 
 load_dotenv()
 
-stt = SpeechToText()
 samplerate = int(os.environ["SPARK_SAMPLE_RATE"])
 model_dir = "models/" + os.environ["SPARK_AUDIO_MODEL"]
+server_url = os.environ["SERVER_URL"]
+server_port = int(os.environ["SERVER_PORT"])
+tmp_folder = "tmp"
+stt = SpeechToText()
+ollama = Ollama.Ollama()
 tts_instance = tts.TextToSpeech(model_dir, ".", "0")
 
 
@@ -34,7 +39,7 @@ async def audio_handler(websocket):
         audio_bytes = message
 
         # Generate unique output filename
-        output_wav_path = f"tmp/output_{asyncio.get_event_loop().time()}.wav"
+        output_wav_path = f"{tmp_folder}/output_{asyncio.get_event_loop().time()}.wav"
 
         # Convert WebM/Opus 48,000Hz to WAV in memory using pydub
         audio = AudioSegment.from_file(
@@ -67,22 +72,27 @@ async def audio_handler(websocket):
             f.write(wav_io.getvalue())
 
         text = stt.transcribe(output_wav_path, language="en")
-        await websocket.send(process_message(text))
+        print(text)
+        answer = ollama.ask(text)
+        print(answer)
+        await websocket.send(process_message(answer))
+        if os.path.exists(output_wav_path):
+            os.remove(output_wav_path)
 
 
 async def main():
-    async with websockets.serve(audio_handler, "0.0.0.0", 6789) as start_server:
-        print("WebSocket server started on ws://localhost:6789")
+    async with websockets.serve(audio_handler, server_url, server_port) as start_server:
+        print(f"WebSocket server started on ws://{server_url}:{server_port}")
         await start_server.wait_closed()
 
 
 if __name__ == "__main__":
     # Empty tmp folder
-    if os.path.exists("tmp"):
-        for f in os.listdir("tmp"):
-            os.remove(os.path.join("tmp", f))
+    if os.path.exists(tmp_folder):
+        for f in os.listdir(tmp_folder):
+            os.remove(os.path.join(tmp_folder, f))
     # If tmp folder doesn't exist, create it
     else:
-        os.makedirs("tmp")
+        os.makedirs("tmp_folder")
 
     asyncio.run(main())

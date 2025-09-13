@@ -47,7 +47,10 @@ async def format_text_and_send(
 async def audio_handler(websocket):
     logger.info("Client connected")
     async for message in websocket:
-        logger.info("Received audio data")
+        socket: websockets.ServerConnection = websocket
+        client_id = socket.id
+        logger.info(f"Received audio data from {client_id}")
+
         # message is a bytes object (the audio blob)
         audio_bytes = message
 
@@ -87,10 +90,12 @@ async def audio_handler(websocket):
         text = stt.transcribe(output_wav_path, language="en")
         await format_text_and_send("user", text, websocket)
         await format_text_and_send("teller", "OK let me think...", websocket)
-        answer = story_teller.ask(text)
+        answer = story_teller.ask(text, client_id)
         answer = answer.replace("A)", " ")
         answer = answer.replace("B)", " ")
         answer = answer.replace("C)", " ")
+        answer = answer.replace("D)", " ")
+        answer = answer.replace("E)", " ")
         voice_answer = process_message(answer)
         await format_text_and_send("teller", answer, websocket)
         await websocket.send(voice_answer)

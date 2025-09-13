@@ -1,29 +1,34 @@
 import asyncio
 import os
 import websockets
-import numpy as np
+
+# import numpy as np
 from pydub import AudioSegment
 import io
+import json
 from dotenv import load_dotenv
 from speech_to_text import SpeechToText
 import tts.TextToSpeech as tts
-import ollama.fetch as Ollama
+import storyteller.conversation as convo
 import soundfile as sf
+import util.logger as log
 
 load_dotenv()
 
 samplerate = int(os.environ["SPARK_SAMPLE_RATE"])
-model_dir = "models/" + os.environ["SPARK_AUDIO_MODEL"]
+stt_model_dir = "models/" + os.environ["SPARK_AUDIO_MODEL"]
+ollama_model = os.environ["OLLAMA_MODEL"]
 server_url = os.environ["SERVER_URL"]
 server_port = int(os.environ["SERVER_PORT"])
 tmp_folder = "tmp"
 stt = SpeechToText()
-ollama = Ollama.Ollama()
-tts_instance = tts.TextToSpeech(model_dir, ".", "0")
+story_teller = convo.OllamaConversation(ollama_model)
+logger = log.Logger()
 
 
 def process_message(message):
     buffer = io.BytesIO()
+    tts_instance = tts.TextToSpeech(stt_model_dir, ".", "0")
     output = tts_instance.generate(message)
     # Convert ndarray to audio file in memory
     sf.write(buffer, output, samplerate, format="WAV")
@@ -31,10 +36,18 @@ def process_message(message):
     return buffer.read()
 
 
+async def format_text_and_send(
+    type: str, content: str, websocket: websockets.ServerConnection
+):
+    data = {"type": type, "content": content}
+    message = json.dumps(data)
+    await websocket.send(message)
+
+
 async def audio_handler(websocket):
-    print("Client connected")
+    logger.info("Client connected")
     async for message in websocket:
-        print("Received audio data")
+        logger.info("Received audio data")
         # message is a bytes object (the audio blob)
         audio_bytes = message
 
@@ -72,10 +85,15 @@ async def audio_handler(websocket):
             f.write(wav_io.getvalue())
 
         text = stt.transcribe(output_wav_path, language="en")
-        print(text)
-        answer = ollama.ask(text)
-        print(answer)
-        await websocket.send(process_message(answer))
+        await format_text_and_send("user", text, websocket)
+        await format_text_and_send("teller", "OK let me think...", websocket)
+        answer = story_teller.ask(text)
+        answer = answer.replace("A)", " ")
+        answer = answer.replace("B)", " ")
+        answer = answer.replace("C)", " ")
+        voice_answer = process_message(answer)
+        await format_text_and_send("teller", answer, websocket)
+        await websocket.send(voice_answer)
         if os.path.exists(output_wav_path):
             os.remove(output_wav_path)
 

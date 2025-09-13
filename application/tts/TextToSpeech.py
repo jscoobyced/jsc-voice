@@ -19,6 +19,6 @@ class TextToSpeech:
         self._model = s.Spark(configuration)
 
     def generate(self, content: str) -> np.ndarray:
-        argument = sa.SparkArgument(content, speed="moderate", pitch="high")
+        argument = sa.SparkArgument(content, speed="low", pitch="high")
 
         return self._model.generate(argument)

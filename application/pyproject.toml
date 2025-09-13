@@ -18,6 +18,7 @@ dependencies = [
   "numba",
   "numpy>=2.2.4",
   "omegaconf>=2.3.0",
+  "ollama",
   "openai-whisper",
   "pydub>=0.25.1",
   "python-dotenv>=1.1.1",

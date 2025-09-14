@@ -27,6 +27,8 @@ stt = SpeechToText()
 story_teller = convo.OllamaConversation(ollama_model)
 logger = log.Logger()
 
+connected_clients = set()
+
 
 def process_message(message):
     buffer = io.BytesIO()
@@ -48,6 +50,7 @@ async def format_text_and_send(
 
 async def audio_handler(websocket):
     logger.info("Client connected")
+    connected_clients.add(websocket)
     async for message in websocket:
         socket: websockets.ServerConnection = websocket
         client_id = socket.id
@@ -105,16 +108,27 @@ async def audio_handler(websocket):
             os.remove(output_wav_path)
 
 
+async def disconnect_all_clients():
+    logger.info("Disconnecting all connected clients...")
+    # Iterate over a copy of the set to avoid issues if clients disconnect during iteration
+    for websocket in list(connected_clients):
+        try:
+            await websocket.close(code=1001, reason="Server shutting down")
+            logger.info(f"Client {websocket.remote_address} disconnected.")
+        except Exception as e:
+            logger.info(f"Error disconnecting client {websocket.remote_address}: {e}")
+    sys.exit(0)
+
+
 async def main():
     async with websockets.serve(audio_handler, server_url, server_port) as start_server:
-        print(f"WebSocket server started on ws://{server_url}:{server_port}")
+        logger.info(f"WebSocket server started on ws://{server_url}:{server_port}")
         await start_server.wait_closed()
 
 
 def signal_handler(sig, frame):
     logger.info("SIGINT (Ctrl+C) received. Performing cleanup...")
-    # Perform cleanup actions here
-    sys.exit(0)
+    asyncio.create_task(disconnect_all_clients())
 
 
 signal.signal(signal.SIGINT, signal_handler)

@@ -36,3 +36,9 @@ python tts-init.py
 ```
 
 7. Running the application
+Then simply run:
+```
+python server.py
+```
+
+Application logs are in `application.log`.

@@ -1,7 +1,11 @@
 from dataclasses import dataclass
 from typing import List
-from ollama import chat
+import ollama
 from ollama import ChatResponse
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
 
 default_system_prompt = (
     "You are a story teller for kids. You are here to assist kids create imaginary stories."
@@ -27,6 +31,7 @@ class OllamaConversation:
         self.model = model
         self.conversations: List[Conversation] = []
         self.system_prompt = system_prompt
+        self.client = ollama.Client(host=os.environ["OLLAMA_URL"])
 
     def ask(self, user_message: str, client_id: str) -> str:
         conversation = self.get_conversation(client_id)
@@ -35,7 +40,9 @@ class OllamaConversation:
         conversation.history.append({"role": "user", "content": user_message})
 
         # Send the conversation history to Ollama
-        response: ChatResponse = chat(model=self.model, messages=conversation.history)
+        response: ChatResponse = self.client.chat(
+            model=self.model, messages=conversation.history
+        )
 
         # Extract assistant's reply
         assistant_reply = response["message"]["content"]

@@ -1,6 +1,8 @@
 import asyncio
 import os
 import websockets
+import signal
+import sys
 
 # import numpy as np
 from pydub import AudioSegment
@@ -108,6 +110,14 @@ async def main():
         print(f"WebSocket server started on ws://{server_url}:{server_port}")
         await start_server.wait_closed()
 
+
+def signal_handler(sig, frame):
+    logger.info("SIGINT (Ctrl+C) received. Performing cleanup...")
+    # Perform cleanup actions here
+    sys.exit(0)
+
+
+signal.signal(signal.SIGINT, signal_handler)
 
 if __name__ == "__main__":
     # Empty tmp folder

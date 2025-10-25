@@ -51,14 +51,11 @@ async def disconnect_all_clients():
 
 
 async def main():
-
     async def signal_handler():
         logger.info("SIGINT (Ctrl+C) received. Performing cleanup...")
-        # Schedule cleanup
         cleanup_task = asyncio.create_task(disconnect_all_clients())
         try:
-            # Wait for cleanup to complete (with timeout)
-            await asyncio.wait_for(cleanup_task, timeout=5.0)
+            await asyncio.wait_for(cleanup_task, timeout=5)
         except asyncio.TimeoutError:
             logger.info("Cleanup timed out.")
         finally:

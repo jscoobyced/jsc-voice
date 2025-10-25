@@ -7,4 +7,4 @@ Internally using code from:
 
 # Quick start
 
-Follow the [README](./README.md)
+Follow the application [README](./application/README.md)

@@ -18,9 +18,8 @@ cd jsc-voice/application
 
 4. Install dependencies:
 ```
-python -m venv .venv
+uv sync
 source .venv/bin/activate
-pip install -e .
 ```
 
 5. Create your `.env` file
@@ -30,15 +29,16 @@ cp .env.example .env
 You will need `HUGGINGFACE_TOKEN` to download the models.
 
 6. Prerequisites
+
 First time only, download the models
 ```
-python tts-init.py
+uv run tts-init.py
 ```
 
 7. Running the application
 Then simply run:
 ```
-python server.py
+uv run server.py
 ```
 
 Application logs are in `application.log`.

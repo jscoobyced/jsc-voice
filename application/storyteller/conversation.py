@@ -33,7 +33,7 @@ class OllamaConversation:
 
         # Send the conversation history to Ollama
         response: ChatResponse = self.client.chat(
-            model=self.model, messages=self.history
+            model=self.model, messages=self.history, options={"temperature": 1.2}
         )
 
         # Extract assistant's reply

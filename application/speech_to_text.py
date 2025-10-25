@@ -1,5 +1,4 @@
 import whisper
-import numpy as np
 
 
 class SpeechToText:
@@ -14,6 +13,5 @@ class SpeechToText:
 
 if __name__ == "__main__":
     stt = SpeechToText(model_name="large")
-    audio = whisper.load_audio("./audio/potato.wav")
-    text = stt.transcribe(audio, language="thai")
+    text = stt.transcribe("./audio/billy-willy.wav", language="en")
     print(text)

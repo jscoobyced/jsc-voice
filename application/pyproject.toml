@@ -3,78 +3,30 @@ name = "jsc-voice"
 version = "0.1.0"
 description = "JSC Voice - A simple API to transcript voice or generate voice from text."
 readme = "README.md"
-requires-python = ">=3.12"
 license = {file = "LICENSE"}
 authors = [
     {name = "JScdroidDev", email = "19742131+jscoobyced@users.noreply.github.com"}
 ]
+requires-python = ">=3.12"
 
 dependencies = [
-  "asyncio>=4.0.0",
-  "einops>=0.8.1",
-  "einx>=0.3.0",
-  "huggingface-hub>=0.30.2",
-  "more-itertools",
-  "numba",
-  "numpy>=2.2.4",
-  "omegaconf>=2.3.0",
-  "ollama",
-  "openai-whisper",
-  "pydub>=0.25.1",
-  "python-dotenv>=1.1.1",
-  "safetensors>=0.5.3",
-  "sounddevice>=0.5.2",
-  "soundfile>=0.13.1",
-  "soxr>=0.5.0",
-  "tiktoken",
-  "torch==2.6.0",
-  "torchaudio>=2.5.1",
-  "tqdm>=4.67.1",
-  "transformers>=4.55.0",
-  "triton>=2; (platform_machine=='x86_64' and sys_platform=='linux') or sys_platform=='linux2'",
-  "websockets>=15.0.1"
+    "asyncio>=4.0.0",
+    "einops>=0.8.1",
+    "einx>=0.3.0",
+    "numpy>=2.3.4",
+    "ollama>=0.6.0",
+    "omegaconf>=2.3.0",
+    "openai-whisper>=20250625",
+    "pydub>=0.25.1",
+    "python-dotenv>=1.1.1",
+    "soundfile>=0.13.1",
+    "soxr>=1.0.0",
+    "torch>=2.6.0",
+    "torchaudio>=2.6.0",
+    "transformers>=4.57.1",
+    "websockets>=15.0.1",
 ]
-optional-dependencies.dev = [ "black", "flake8", "isort", "pytest", "scipy" ]
-
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
 
 [project.urls]
 "Homepage" = "https://github.com/jscoobyced/jsc-voice"
 "Bug Tracker" = "https://github.com/jscoobyced/jsc-voice/issues"
-
-[tool.hatch.build.targets.wheel]
-packages = ["jsc-voice"]
-
-[tool.ruff]
-# Never enforce `E501` (line length violations).
-lint.ignore = ["C901", "E501", "E741", "W605"]
-lint.select = ["C", "E", "F", "I", "W"]
-line-length = 119
-
-# Ignore import violations in all `__init__.py` files.
-[tool.ruff.lint.per-file-ignores]
-"__init__.py" = ["E402", "F401", "F403", "F811"]
-
-[tool.ruff.lint.isort]
-lines-after-imports = 2
-
-[tool.uv.sources]
-torch = [
-  { index = "pytorch-cu126", marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
-]
-torchaudio = [
-  { index = "pytorch-cu126", marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
-]
-
-[[tool.uv.index]]
-name = "pytorch-cu126"
-url = "https://download.pytorch.org/whl/cu126"
-explicit = true
-
-[dependency-groups]
-dev = [
-    "ninja>=1.11.1.4",
-    "packaging>=25.0",
-]

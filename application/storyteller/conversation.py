@@ -1,5 +1,3 @@
-from dataclasses import dataclass
-from typing import List
 import ollama
 from ollama import ChatResponse
 from dotenv import load_dotenv
@@ -18,54 +16,33 @@ default_system_prompt = (
 )
 
 
-@dataclass
-class Conversation:
-    client_id: str
-    history: List[str]
-
-
 class OllamaConversation:
     def __init__(
         self, model: str = "llama2", system_prompt: str = default_system_prompt
     ):
         self.model = model
-        self.conversations: List[Conversation] = []
+        self.history = []
         self.system_prompt = system_prompt
+        self.history.append({"role": "system", "content": self.system_prompt})
         self.client = ollama.Client(host=os.environ["OLLAMA_URL"])
 
-    def ask(self, user_message: str, client_id: str) -> str:
-        conversation = self.get_conversation(client_id)
+    def ask(self, user_message: str) -> str:
 
         # Add user message to history
-        conversation.history.append({"role": "user", "content": user_message})
+        self.history.append({"role": "user", "content": user_message})
 
         # Send the conversation history to Ollama
         response: ChatResponse = self.client.chat(
-            model=self.model, messages=conversation.history
+            model=self.model, messages=self.history
         )
 
         # Extract assistant's reply
         assistant_reply = response["message"]["content"]
 
         # Add assistant reply to history
-        conversation.history.append({"role": "assistant", "content": assistant_reply})
+        self.history.append({"role": "assistant", "content": assistant_reply})
 
         return assistant_reply
-
-    def reset(self, client_id: str):
-        """Clear the conversation history, keeping the system prompt if set."""
-        conversation = self.get_conversation(client_id)
-        self.conversations.remove(conversation)
-
-    def get_conversation(self, client_id: str):
-        for conversation in self.conversations:
-            if conversation.client_id == client_id:
-                return conversation
-        new_history = []
-        new_history.append({"role": "system", "content": self.system_prompt})
-        new_conversation = Conversation(client_id, new_history)
-        self.conversations.append(new_conversation)
-        return new_conversation
 
 
 # Example usage:

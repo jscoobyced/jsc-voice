@@ -2,144 +2,91 @@ import asyncio
 import os
 import websockets
 import signal
-import sys
-
-# import numpy as np
-from pydub import AudioSegment
-import io
-import json
+import ssl
 from dotenv import load_dotenv
-from speech_to_text import SpeechToText
-import tts.TextToSpeech as tts
-import storyteller.conversation as convo
-import soundfile as sf
+from storyteller.story_client import StoryClient, StoryClients
+from storyteller.processor import StoryProcessor
 import util.logger as log
 
 load_dotenv()
 
-samplerate = int(os.environ["SPARK_SAMPLE_RATE"])
-stt_model_dir = "models/" + os.environ["SPARK_AUDIO_MODEL"]
-ollama_model = os.environ["OLLAMA_MODEL"]
+logger = log.Logger()
+clients = StoryClients()
 server_url = os.environ["SERVER_URL"]
 server_port = int(os.environ["SERVER_PORT"])
-tmp_folder = "tmp"
-stt = SpeechToText()
-story_teller = convo.OllamaConversation(ollama_model)
-logger = log.Logger()
 
-connected_clients = set()
-
-
-def process_message(message):
-    buffer = io.BytesIO()
-    tts_instance = tts.TextToSpeech(stt_model_dir, ".", "0")
-    output = tts_instance.generate(message)
-    # Convert ndarray to audio file in memory
-    sf.write(buffer, output, samplerate, format="WAV")
-    buffer.seek(0)
-    return buffer.read()
-
-
-async def format_text_and_send(
-    type: str, content: str, websocket: websockets.ServerConnection
-):
-    data = {"type": type, "content": content}
-    message = json.dumps(data)
-    await websocket.send(message)
+ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+ssl_context.load_cert_chain(certfile="origin.pem", keyfile="origin.key")
+story_processor = StoryProcessor()
 
 
 async def audio_handler(websocket):
     logger.info("Client connected")
-    connected_clients.add(websocket)
     async for message in websocket:
         socket: websockets.ServerConnection = websocket
         client_id = socket.id
         logger.info(f"Received audio data from {client_id}")
-
-        # message is a bytes object (the audio blob)
-        audio_bytes = message
-
-        # Generate unique output filename
-        output_wav_path = f"{tmp_folder}/output_{asyncio.get_event_loop().time()}.wav"
-
-        # Convert WebM/Opus 48,000Hz to WAV in memory using pydub
-        audio = AudioSegment.from_file(
-            io.BytesIO(audio_bytes),
-            format="webm",
-            sample_width=4,
-            channels=1,
-            frame_rate=48000,
-            codec="opus",
-        )
-        wav_io = io.BytesIO()
-
-        # Export to WAV 16Hz 16-bit mono
-        audio.export(
-            wav_io,
-            format="wav",
-            codec="pcm_s16le",
-            parameters=["-ar", "16000", "-ac", "1"],
-        )
-        wav_io.seek(0)
-
-        # Read WAV into numpy array
-        # wav_audio = AudioSegment.from_wav(wav_io)
-        # samples = np.array(wav_audio.get_array_of_samples())
-        # if wav_audio.channels == 2:
-        #     samples = samples.reshape((-1, 2))  # Stereo
-
-        # Store audio to file
-        with open(output_wav_path, "wb") as f:
-            f.write(wav_io.getvalue())
-
-        text = stt.transcribe(output_wav_path, language="en")
-        await format_text_and_send("user", text, websocket)
-        await format_text_and_send("teller", "OK let me think...", websocket)
-        answer = story_teller.ask(text, client_id)
-        answer = answer.replace("A)", " ")
-        answer = answer.replace("B)", " ")
-        answer = answer.replace("C)", " ")
-        answer = answer.replace("D)", " ")
-        answer = answer.replace("E)", " ")
-        voice_answer = process_message(answer)
-        await format_text_and_send("teller", answer, websocket)
-        await websocket.send(voice_answer)
-        if os.path.exists(output_wav_path):
-            os.remove(output_wav_path)
+        if not clients.client_exists(client_id):
+            client = StoryClient(id=client_id, socket=websocket)
+            clients.add_client(client_id=client_id, client_object=client)
+        client = clients.get_client(client_id)
+        await story_processor.process(message=message, client=client)
 
 
 async def disconnect_all_clients():
-    logger.info("Disconnecting all connected clients...")
+    nb_clients = len(clients)
+    logger.info(f"Disconnecting {nb_clients} connected clients...")
+    if nb_clients == 0:
+        return
     # Iterate over a copy of the set to avoid issues if clients disconnect during iteration
-    for websocket in list(connected_clients):
+    connected_clients = clients.get_all_clients()
+    for client in connected_clients.values():
         try:
-            await websocket.close(code=1001, reason="Server shutting down")
-            logger.info(f"Client {websocket.remote_address} disconnected.")
+            await client.socket.close(code=1001, reason="Server shutting down")
+            logger.info(f"Client {client.socket.remote_address} disconnected.")
         except Exception as e:
-            logger.info(f"Error disconnecting client {websocket.remote_address}: {e}")
-    sys.exit(0)
+            logger.info(
+                f"Error disconnecting client {client.socket.remote_address}: {e}"
+            )
 
 
 async def main():
-    async with websockets.serve(audio_handler, server_url, server_port) as start_server:
+
+    async def signal_handler():
+        logger.info("SIGINT (Ctrl+C) received. Performing cleanup...")
+        # Schedule cleanup
+        cleanup_task = asyncio.create_task(disconnect_all_clients())
+        try:
+            # Wait for cleanup to complete (with timeout)
+            await asyncio.wait_for(cleanup_task, timeout=5.0)
+        except asyncio.TimeoutError:
+            logger.info("Cleanup timed out.")
+        finally:
+            start_server.close()
+
+    loop = asyncio.get_running_loop()
+    loop.add_signal_handler(
+        signal.SIGINT, lambda: asyncio.create_task(signal_handler())
+    )
+
+    async with websockets.serve(
+        audio_handler, server_url, server_port, ssl=ssl_context
+    ) as start_server:
         logger.info(f"WebSocket server started on ws://{server_url}:{server_port}")
         await start_server.wait_closed()
 
 
-def signal_handler(sig, frame):
-    logger.info("SIGINT (Ctrl+C) received. Performing cleanup...")
-    asyncio.create_task(disconnect_all_clients())
-
-
-signal.signal(signal.SIGINT, signal_handler)
-
 if __name__ == "__main__":
+    tmp_folder = os.environ["TMP_FOLDER"]
     # Empty tmp folder
     if os.path.exists(tmp_folder):
         for f in os.listdir(tmp_folder):
             os.remove(os.path.join(tmp_folder, f))
     # If tmp folder doesn't exist, create it
     else:
-        os.makedirs("tmp_folder")
+        os.makedirs(tmp_folder)
 
-    asyncio.run(main())
+    try:
+        asyncio.run(main())
+    except Exception as e:
+        logger.info(f"Error: {e}")

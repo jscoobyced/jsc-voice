@@ -10,4 +10,4 @@ model_dir = "models/" + os.environ["SPARK_AUDIO_MODEL"]
 
 tts_instance = tts.TextToSpeech(model_dir, ".", "0")
 output = tts_instance.generate(text)
-sf.write("output.wav", output, 16000, format="wav")
+sf.write("output.wav", output, 16000, format="WAV")

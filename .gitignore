@@ -9,3 +9,4 @@ __pycache__/
 !billy-willy.wav
 *.log
 application/models
+origin.*

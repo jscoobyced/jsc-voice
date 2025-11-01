@@ -61,9 +61,22 @@ class StoryProcessor:
         answer = answer.replace("C)", " ")
         answer = answer.replace("D)", " ")
         answer = answer.replace("E)", " ")
-        voice_answer = self.process_message(answer)
         await self.format_text_and_send("teller", answer, client.socket)
-        await client.socket.send(voice_answer)
+        # Split answer into sentences and process each, sentences can be split by ., ! or ?
+        temp_sentence = ""
+        for char in answer:
+            temp_sentence += char
+            if char in [".", "!", "?"]:
+                sentence = temp_sentence.strip()
+                voice_answer = self.process_message(sentence)
+                await client.socket.send(voice_answer)
+                # Make sure the socket data is sent before continuing
+                await asyncio.sleep(0.1)
+                temp_sentence = ""
+        if temp_sentence:
+            sentence = temp_sentence.strip()
+            voice_answer = self.process_message(sentence)
+            await client.socket.send(voice_answer)
         if os.path.exists(output_wav_path):
             os.remove(output_wav_path)
 

@@ -14,6 +14,7 @@ default_system_prompt = (
     " You will prevent and censor any form of violence, weapon, sexual topic, harassment,"
     " rude or impolite words or behavior. Your answer must less than 50 words. If the user"
     " asks for a full story or a longer message, you will only response with a maximum of 50 words."
+    " Do not include emoji or icon in the response, never. Always respond in plain text only."
 )
 
 

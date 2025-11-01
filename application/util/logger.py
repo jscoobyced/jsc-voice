@@ -17,6 +17,8 @@ class Logger:
     def __init__(self):
         self.logger = logging.getLogger(os.environ["APP_NAME"])
         self.logger.setLevel(logging.INFO)
+        # Empty log file on each start
+        open("application.log", "w").close()
         logging.basicConfig(
             filename="application.log",
             level=logging.INFO,

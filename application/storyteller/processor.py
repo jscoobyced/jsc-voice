@@ -24,35 +24,37 @@ class StoryProcessor:
     async def process(self, message: Any, client: StoryClient):
         # message is a bytes object (the audio blob)
         audio_bytes = message
-
+        text = "Please suggest the next part of the story. Make a choice for me."
+        data_len = len(audio_bytes)
         # Generate unique output filename
         output_wav_path = f"{tmp_folder}/output_{asyncio.get_event_loop().time()}.wav"
 
-        # Convert WebM/Opus 48,000Hz to WAV in memory using pydub
-        audio = AudioSegment.from_file(
-            io.BytesIO(audio_bytes),
-            format="webm",
-            sample_width=4,
-            channels=1,
-            frame_rate=48000,
-            codec="opus",
-        )
-        wav_io = io.BytesIO()
+        if data_len > 1:
+            # Convert WebM/Opus 48,000Hz to WAV in memory using pydub
+            audio = AudioSegment.from_file(
+                io.BytesIO(audio_bytes),
+                format="webm",
+                sample_width=4,
+                channels=1,
+                frame_rate=48000,
+                codec="opus",
+            )
+            wav_io = io.BytesIO()
 
-        # Export to WAV 16Hz 16-bit mono
-        audio.export(
-            wav_io,
-            format="wav",
-            codec="pcm_s16le",
-            parameters=["-ar", "16000", "-ac", "1"],
-        )
-        wav_io.seek(0)
+            # Export to WAV 16Hz 16-bit mono
+            audio.export(
+                wav_io,
+                format="wav",
+                codec="pcm_s16le",
+                parameters=["-ar", "16000", "-ac", "1"],
+            )
+            wav_io.seek(0)
 
-        # Store audio to file
-        with open(output_wav_path, "wb") as f:
-            f.write(wav_io.getvalue())
+            # Store audio to file
+            with open(output_wav_path, "wb") as f:
+                f.write(wav_io.getvalue())
 
-        text = stt.transcribe(output_wav_path, language="en")
+            text = stt.transcribe(output_wav_path, language="en")
         await self.format_text_and_send("user", text, client.socket)
         await self.format_text_and_send("teller", "OK let me think...", client.socket)
         answer = client.conversation.ask(text)
@@ -66,7 +68,7 @@ class StoryProcessor:
         temp_sentence = ""
         for char in answer:
             temp_sentence += char
-            if char in [".", "!", "?"]:
+            if char in [".", "!", "?", ":"]:
                 sentence = temp_sentence.strip()
                 voice_answer = self.process_message(sentence)
                 await client.socket.send(voice_answer)
@@ -77,6 +79,8 @@ class StoryProcessor:
             sentence = temp_sentence.strip()
             voice_answer = self.process_message(sentence)
             await client.socket.send(voice_answer)
+        await self.format_text_and_send("teller", "END_OF_CONVERSATION", client.socket)
+
         if os.path.exists(output_wav_path):
             os.remove(output_wav_path)
 
